@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
 import com.google.idea.blaze.android.projectsystem.BlazeClassFileFinder;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.JavaIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
@@ -86,7 +87,7 @@ public class BlazeClassJarProvider implements ClassJarProvider {
       if (javaIdeInfo != null) {
         for (LibraryArtifact jar : javaIdeInfo.getJars()) {
           if (jar.getClassJar() != null && jar.getClassJar().isSource()) {
-            results.add(decoder.decode(jar.getClassJar()));
+            results.add(OutputArtifactResolver.resolve(project, decoder, jar.getClassJar()));
           }
         }
       }

@@ -30,6 +30,7 @@ import com.google.common.collect.SortedSetMultimap;
 import com.google.common.collect.TreeMultimap;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModule;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetKey;
@@ -177,7 +178,8 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
       return;
     }
 
-    File manifest = decoder.decode(target.getAndroidIdeInfo().getManifest());
+    File manifest =
+        OutputArtifactResolver.resolve(project, decoder, target.getAndroidIdeInfo().getManifest());
     if (manifest.getName().equals(ANDROID_MANIFEST_XML)) {
       return;
     }
@@ -299,7 +301,7 @@ public class BlazeRenderErrorContributor extends RenderErrorContributor {
 
   private HtmlBuilder addTargetLink(
       HtmlBuilder builder, TargetIdeInfo target, ArtifactLocationDecoder decoder) {
-    File buildFile = decoder.decode(target.getBuildFile());
+    File buildFile = OutputArtifactResolver.resolve(project, decoder, target.getBuildFile());
     int line =
         ApplicationManager.getApplication()
             .runReadAction(

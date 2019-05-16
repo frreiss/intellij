@@ -15,17 +15,17 @@
  */
 package com.google.idea.blaze.base.command.buildresult;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.idea.blaze.base.filecache.RemoteOutputsCache;
 import com.google.idea.blaze.base.ideinfo.ArtifactLocation;
 import com.google.idea.blaze.base.sync.workspace.ArtifactLocationDecoder;
 import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Helper class for resolving {@link OutputArtifact}s to local files. */
@@ -35,12 +35,12 @@ public final class OutputArtifactResolver {
    * Resolve a collection of {@link ArtifactLocation} to local files, skipping those for which a
    * local file can't be found.
    */
-  public static ImmutableList<File> resolveAll(
+  public static List<File> resolveAll(
       Project project, ArtifactLocationDecoder decoder, Collection<ArtifactLocation> artifacts) {
     return artifacts.stream()
         .map(a -> resolve(project, decoder, a))
         .filter(Objects::nonNull)
-        .collect(toImmutableList());
+        .collect(Collectors.toList());
   }
 
   /**

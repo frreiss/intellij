@@ -23,6 +23,7 @@ import com.android.tools.idea.res.ResourceIdManager;
 import com.android.tools.idea.res.ResourceRepositoryManager;
 import com.google.common.base.Strings;
 import com.google.idea.blaze.android.ResourceRepositoryManagerCompat;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.AndroidIdeInfo;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
@@ -151,7 +152,9 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
           continue;
         }
 
-        File classJarFile = projectData.getArtifactLocationDecoder().decode(jar.getClassJar());
+        File classJarFile =
+            OutputArtifactResolver.resolve(
+                project, projectData.getArtifactLocationDecoder(), jar.getClassJar());
         VirtualFile classJarVF =
             VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
 
@@ -209,7 +212,10 @@ public class PsiBasedClassFileFinder implements BlazeClassFileFinder {
     }
 
     File classJarFile =
-        projectData.getArtifactLocationDecoder().decode(blazeLibrary.libraryArtifact.getClassJar());
+        OutputArtifactResolver.resolve(
+            project,
+            projectData.getArtifactLocationDecoder(),
+            blazeLibrary.libraryArtifact.getClassJar());
     VirtualFile classJar =
         VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
     if (classJar == null) {

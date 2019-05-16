@@ -19,6 +19,7 @@ import com.android.SdkConstants;
 import com.android.tools.idea.project.ModuleBasedClassFileFinder;
 import com.google.common.collect.Lists;
 import com.google.idea.blaze.android.sync.model.AndroidResourceModuleRegistry;
+import com.google.idea.blaze.base.command.buildresult.OutputArtifactResolver;
 import com.google.idea.blaze.base.ideinfo.LibraryArtifact;
 import com.google.idea.blaze.base.ideinfo.TargetIdeInfo;
 import com.google.idea.blaze.base.ideinfo.TargetMap;
@@ -112,7 +113,8 @@ public class TransitiveClosureClassFileFinder extends ModuleBasedClassFileFinder
       if (jar.getClassJar() == null || jar.getClassJar().isSource()) {
         continue;
       }
-      File classJarFile = decoder.decode(jar.getClassJar());
+      File classJarFile =
+          OutputArtifactResolver.resolve(module.getProject(), decoder, jar.getClassJar());
       VirtualFile classJarVF =
           VirtualFileSystemProvider.getInstance().getSystem().findFileByIoFile(classJarFile);
       if (classJarVF == null) {
