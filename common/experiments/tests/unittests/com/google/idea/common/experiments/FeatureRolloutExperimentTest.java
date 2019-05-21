@@ -18,8 +18,8 @@ package com.google.idea.common.experiments;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.google.common.base.StandardSystemProperty;
 import com.google.idea.testing.IntellijRule;
+import com.intellij.util.SystemProperties;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -35,17 +35,13 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class FeatureRolloutExperimentTest {
 
-  private static final String USERNAME_PROPERTY = StandardSystemProperty.USER_NAME.key();
-
   @Rule public IntellijRule intellij = new IntellijRule();
 
-  private String initialUserName;
   private MockExperimentService experimentService;
   private FeatureRolloutExperiment rolloutExperiment;
 
   @Before
   public void setUp() {
-    initialUserName = System.getProperty(USERNAME_PROPERTY);
     InternalDevFlag.markUserAsInternalDev(false);
 
     experimentService = new MockExperimentService();
@@ -56,11 +52,7 @@ public class FeatureRolloutExperimentTest {
 
   @After
   public void tearDown() {
-    if (initialUserName != null) {
-      System.setProperty(USERNAME_PROPERTY, initialUserName);
-    } else {
-      System.clearProperty(USERNAME_PROPERTY);
-    }
+    SystemProperties.setTestUserName(null); // Reset to real username
   }
 
   private void setFeatureRolloutPercentage(int percentage) {
@@ -75,10 +67,51 @@ public class FeatureRolloutExperimentTest {
             .collect(Collectors.toList());
 
     for (String userName : userNames) {
-      int percentage = FeatureRolloutExperiment.getUserHash(userName);
+      int percentage = rolloutExperiment.getUserHash(userName);
       assertWithMessage(userName).that(percentage).isLessThan(100);
       assertWithMessage(userName).that(percentage).isAtLeast(0);
     }
+  }
+
+  @Test
+  public void testUserHashIsSameForEqualUsernameAndExperiment() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment equalExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.one");
+
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    for (String userName : userNames) {
+      int percentage = rolloutExperiment.getUserHash(userName);
+      assertWithMessage(userName)
+          .that(percentage)
+          .isEqualTo(rolloutExperiment.getUserHash(userName));
+      assertWithMessage(userName).that(percentage).isEqualTo(equalExperiment.getUserHash(userName));
+    }
+  }
+
+  @Test
+  public void testUserHashForSameUserDependsOnExperimentKey() {
+    rolloutExperiment = new FeatureRolloutExperiment("rollout.experiment.one");
+    FeatureRolloutExperiment differentExperiment =
+        new FeatureRolloutExperiment("rollout.experiment.two");
+
+    List<String> userNames =
+        Stream.generate(FeatureRolloutExperimentTest::generateUsername)
+            .limit(10000)
+            .collect(Collectors.toList());
+
+    long differenceCount =
+        userNames.stream()
+            .filter(
+                userName ->
+                    rolloutExperiment.getUserHash(userName)
+                        != differentExperiment.getUserHash(userName))
+            .count();
+    assertThat(differenceCount).isAtLeast(9800L);
   }
 
   /**
@@ -115,7 +148,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   @Test
-  public void testAlwaysDisabledIfInvalidRolloutPercentage() throws Exception {
+  public void testAlwaysDisabledIfInvalidRolloutPercentage() {
     List<String> userNames =
         Stream.generate(FeatureRolloutExperimentTest::generateUsername)
             .limit(10000)
@@ -177,7 +210,7 @@ public class FeatureRolloutExperimentTest {
   }
 
   private boolean isEnabled(String userName) {
-    System.setProperty(USERNAME_PROPERTY, userName);
+    SystemProperties.setTestUserName(userName);
     return rolloutExperiment.isEnabled();
   }
 
